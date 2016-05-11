@@ -56,7 +56,7 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
         bucket = Bucket.create({
             layer: layer,
             index: bucketIndex++,
-            childLayers: layerFamilies[layerId],
+            styleLayers: layerFamilies[layerId],
             zoom: this.zoom,
             overscaling: this.overscaling,
             showCollisionBoxes: this.showCollisionBoxes,
@@ -114,7 +114,7 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
         bucket = bucketsById[id];
         if (bucket.features.length === 0) continue;
 
-        featureIndex.bucketLayerIDs[bucket.index] = bucket.childLayers.map(getLayerId);
+        featureIndex.bucketLayerIDs[bucket.index] = bucket.styleLayers.map(getLayerId);
 
         buckets.push(bucket);
 

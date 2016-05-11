@@ -88,7 +88,7 @@ test('Bucket', function(t) {
         var Class = createClass(options);
         return new Class({
             layer: layers[0],
-            childLayers: layers,
+            styleLayers: layers,
             buffers: {}
         });
     }

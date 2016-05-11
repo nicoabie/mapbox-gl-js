@@ -42,7 +42,7 @@ test('SymbolBucket', function(t) {
             zoom: 0,
             collisionBoxArray: collisionBoxArray,
             layer: layer,
-            childLayers: [layer],
+            styleLayers: [layer],
             tileExtent: 4096
         });
         bucket.createArrays();

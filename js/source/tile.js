@@ -170,7 +170,7 @@ function unserializeBuckets(input, style) {
 
         var bucket = Bucket.create(util.extend({
             layer: layer,
-            childLayers: input[i].childLayerIds
+            styleLayers: input[i].styleLayerIds
                 .map(style.getLayer.bind(style))
                 .filter(function(layer) { return layer; })
         }, input[i]));

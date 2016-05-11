@@ -63,7 +63,7 @@ function Bucket(options) {
     this.zoom = options.zoom;
     this.overscaling = options.overscaling;
     this.layer = options.layer;
-    this.childLayers = options.childLayers;
+    this.styleLayers = options.styleLayers;
 
     this.type = this.layer.type;
     this.features = [];
@@ -77,7 +77,7 @@ function Bucket(options) {
     this.dataLayers = createDataLayers(this);
 
     if (options.arrays) {
-        var childLayers = this.childLayers;
+        var styleLayers = this.styleLayers;
         this.bufferGroups = util.mapObject(options.arrays, function(programArrayGroups, dataLayerTypeName) {
             return programArrayGroups.map(function(programArrayGroup) {
 
@@ -91,8 +91,8 @@ function Bucket(options) {
 
                 group.vaos = {};
                 if (group.layout.element2) group.secondVaos = {};
-                for (var l = 0; l < childLayers.length; l++) {
-                    var layerName = childLayers[l].id;
+                for (var l = 0; l < styleLayers.length; l++) {
+                    var layerName = styleLayers[l].id;
                     group.vaos[layerName] = new VertexArrayObject();
                     if (group.layout.element2) group.secondVaos[layerName] = new VertexArrayObject();
                 }
@@ -148,8 +148,8 @@ Bucket.prototype.makeRoomFor = function(dataLayerTypeName, numVertices) {
         if (ElementArrayType) currentGroup.layout.element = new ElementArrayType();
         if (ElementArrayType2) currentGroup.layout.element2 = new ElementArrayType2();
 
-        for (var i = 0; i < this.childLayers.length; i++) {
-            var layerName = this.childLayers[i].id;
+        for (var i = 0; i < this.styleLayers.length; i++) {
+            var layerName = this.styleLayers[i].id;
             var PaintVertexArrayType = arrayTypes.paint[layerName];
             currentGroup.paint[layerName] = new PaintVertexArrayType();
         }
@@ -269,7 +269,7 @@ Bucket.prototype.serialize = function() {
             });
         }),
 
-        childLayerIds: this.childLayers.map(function(layer) {
+        styleLayerIds: this.styleLayers.map(function(layer) {
             return layer.id;
         })
     };
@@ -283,14 +283,14 @@ Bucket.prototype.createFilter = function() {
 
 var FAKE_ZOOM_HISTORY = { lastIntegerZoom: Infinity, lastIntegerZoomTime: 0, lastZoom: 0 };
 Bucket.prototype.recalculateStyleLayers = function() {
-    for (var i = 0; i < this.childLayers.length; i++) {
-        this.childLayers[i].recalculate(this.zoom, FAKE_ZOOM_HISTORY);
+    for (var i = 0; i < this.styleLayers.length; i++) {
+        this.styleLayers[i].recalculate(this.zoom, FAKE_ZOOM_HISTORY);
     }
 };
 
 Bucket.prototype.populatePaintArrays = function(dataLayerTypeName, globalProperties, featureProperties, startGroup, startIndex) {
-    for (var l = 0; l < this.childLayers.length; l++) {
-        var layer = this.childLayers[l];
+    for (var l = 0; l < this.styleLayers.length; l++) {
+        var layer = this.styleLayers[l];
         var groups = this.arrayGroups[dataLayerTypeName];
         for (var g = startGroup.index; g < groups.length; g++) {
             var group = groups[g];
@@ -335,8 +335,8 @@ function createDataLayers(bucket) {
         var dataLayerType = bucket.dataLayerTypes[dataLayerTypeName];
         var dataTypeLayers = layers[dataLayerTypeName] = {};
 
-        for (var c = 0; c < bucket.childLayers.length; c++) {
-            dataTypeLayers[bucket.childLayers[c].id] = {
+        for (var c = 0; c < bucket.styleLayers.length; c++) {
+            dataTypeLayers[bucket.styleLayers[c].id] = {
                 attributes: [],
                 uniforms: [],
                 defines: [],
@@ -350,8 +350,8 @@ function createDataLayers(bucket) {
             var attribute = dataLayerType.paintAttributes[i];
             attribute.multiplier = attribute.multiplier || 1;
 
-            for (var j = 0; j < bucket.childLayers.length; j++) {
-                var styleLayer = bucket.childLayers[j];
+            for (var j = 0; j < bucket.styleLayers.length; j++) {
+                var styleLayer = bucket.styleLayers[j];
                 var layer = dataTypeLayers[styleLayer.id];
 
                 var attributeType = attribute.components === 1 ? 'float' : 'vec' + attribute.components;

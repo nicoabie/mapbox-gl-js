@@ -18,7 +18,7 @@ test('LineBucket', function(t) {
     var bucket = new LineBucket({
         buffers: {},
         layer: layer,
-        childLayers: [layer]
+        styleLayers: [layer]
     });
     bucket.createArrays();
 

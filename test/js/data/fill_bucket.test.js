@@ -30,7 +30,7 @@ test('FillBucket', function(t) {
     var bucket = new FillBucket({
         buffers: {},
         layer: layer,
-        childLayers: [layer]
+        styleLayers: [layer]
     });
     bucket.createArrays();
 
