@@ -138,10 +138,10 @@ SymbolBucket.prototype.populateBuffers = function(collisionTile, stacks, icons) 
     // This calculates text-size at a high zoom level so that all tiles can
     // use the same value when calculating anchor positions.
     var zoomHistory = { lastIntegerZoom: Infinity, lastIntegerZoomTime: 0, lastZoom: 0 };
-    this.adjustedTextMaxSize = this.layer.getLayoutValue('text-size', {zoom: 18, zoomHistory: zoomHistory});
-    this.adjustedTextSize = this.layer.getLayoutValue('text-size', {zoom: this.zoom + 1, zoomHistory: zoomHistory});
-    this.adjustedIconMaxSize = this.layer.getLayoutValue('icon-size', {zoom: 18, zoomHistory: zoomHistory});
-    this.adjustedIconSize = this.layer.getLayoutValue('icon-size', {zoom: this.zoom + 1, zoomHistory: zoomHistory});
+    this.adjustedTextMaxSize = this.parentStyleLayer.getLayoutValue('text-size', {zoom: 18, zoomHistory: zoomHistory});
+    this.adjustedTextSize = this.parentStyleLayer.getLayoutValue('text-size', {zoom: this.zoom + 1, zoomHistory: zoomHistory});
+    this.adjustedIconMaxSize = this.parentStyleLayer.getLayoutValue('icon-size', {zoom: 18, zoomHistory: zoomHistory});
+    this.adjustedIconSize = this.parentStyleLayer.getLayoutValue('icon-size', {zoom: this.zoom + 1, zoomHistory: zoomHistory});
 
     var tileSize = 512 * this.overscaling;
     this.tilePixelRatio = EXTENT / tileSize;
@@ -149,7 +149,7 @@ SymbolBucket.prototype.populateBuffers = function(collisionTile, stacks, icons) 
     this.symbolInstances = [];
     this.iconsNeedLinear = false;
 
-    var layout = this.layer.layout;
+    var layout = this.parentStyleLayer.layout;
     var features = this.features;
     var textFeatures = this.textFeatures;
 
@@ -250,7 +250,7 @@ SymbolBucket.prototype.populateBuffers = function(collisionTile, stacks, icons) 
 };
 
 SymbolBucket.prototype.addFeature = function(lines, shapedText, shapedIcon, featureIndex) {
-    var layout = this.layer.layout;
+    var layout = this.parentStyleLayer.layout;
 
     var glyphSize = 24;
 
@@ -355,7 +355,7 @@ SymbolBucket.prototype.placeFeatures = function(collisionTile, showCollisionBoxe
 
     this.createArrays();
 
-    var layout = this.layer.layout;
+    var layout = this.parentStyleLayer.layout;
 
     var maxScale = collisionTile.maxScale;
 
@@ -482,7 +482,7 @@ SymbolBucket.prototype.addSymbols = function(dataLayerType, quads, scale, keepUp
 
 SymbolBucket.prototype.updateIcons = function(icons) {
     this.recalculateStyleLayers();
-    var iconValue = this.layer.layout['icon-image'];
+    var iconValue = this.parentStyleLayer.layout['icon-image'];
     if (!iconValue) return;
 
     for (var i = 0; i < this.features.length; i++) {
@@ -494,10 +494,10 @@ SymbolBucket.prototype.updateIcons = function(icons) {
 
 SymbolBucket.prototype.updateFont = function(stacks) {
     this.recalculateStyleLayers();
-    var fontName = this.layer.layout['text-font'],
+    var fontName = this.parentStyleLayer.layout['text-font'],
         stack = stacks[fontName] = stacks[fontName] || {};
 
-    this.textFeatures = resolveText(this.features, this.layer.layout, stack);
+    this.textFeatures = resolveText(this.features, this.parentStyleLayer.layout, stack);
 };
 
 SymbolBucket.prototype.addToDebugBuffers = function(collisionTile) {

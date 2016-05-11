@@ -29,7 +29,7 @@ test('FillBucket', function(t) {
     var layer = new StyleLayer({ id: 'test', type: 'fill', layout: {} });
     var bucket = new FillBucket({
         buffers: {},
-        layer: layer,
+        parentStyleLayer: layer,
         styleLayers: [layer]
     });
     bucket.createArrays();

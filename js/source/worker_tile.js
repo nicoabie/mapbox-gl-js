@@ -54,7 +54,7 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
         if (data.layers && !data.layers[layer.sourceLayer]) continue;
 
         bucket = Bucket.create({
-            layer: layer,
+            parentStyleLayer: layer,
             index: bucketIndex++,
             styleLayers: layerFamilies[layerId],
             zoom: this.zoom,

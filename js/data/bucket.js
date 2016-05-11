@@ -22,7 +22,7 @@ Bucket.create = function(options) {
         circle: require('./bucket/circle_bucket'),
         symbol: require('./bucket/symbol_bucket')
     };
-    return new Classes[options.layer.type](options);
+    return new Classes[options.parentStyleLayer.type](options);
 };
 
 
@@ -62,17 +62,17 @@ Bucket.EXTENT = 8192;
 function Bucket(options) {
     this.zoom = options.zoom;
     this.overscaling = options.overscaling;
-    this.layer = options.layer;
+    this.parentStyleLayer = options.parentStyleLayer;
     this.styleLayers = options.styleLayers;
 
-    this.type = this.layer.type;
+    this.type = this.parentStyleLayer.type;
     this.features = [];
-    this.id = this.layer.id;
+    this.id = this.parentStyleLayer.id;
     this.index = options.index;
-    this.sourceLayer = this.layer.sourceLayer;
+    this.sourceLayer = this.parentStyleLayer.sourceLayer;
     this.sourceLayerIndex = options.sourceLayerIndex;
-    this.minZoom = this.layer.minzoom;
-    this.maxZoom = this.layer.maxzoom;
+    this.minZoom = this.parentStyleLayer.minzoom;
+    this.maxZoom = this.parentStyleLayer.maxzoom;
 
     this.dataLayers = createDataLayers(this);
 
@@ -250,7 +250,7 @@ Bucket.prototype.setUniforms = function(gl, dataLayerTypeName, program, layer, g
 
 Bucket.prototype.serialize = function() {
     return {
-        layerId: this.layer.id,
+        layerId: this.parentStyleLayer.id,
         zoom: this.zoom,
         arrays: util.mapObject(this.arrayGroups, function(programArrayGroups) {
             return programArrayGroups.map(function(arrayGroup) {
@@ -277,7 +277,7 @@ Bucket.prototype.serialize = function() {
 
 Bucket.prototype.createFilter = function() {
     if (!this.filter) {
-        this.filter = featureFilter(this.layer.filter);
+        this.filter = featureFilter(this.parentStyleLayer.filter);
     }
 };
 

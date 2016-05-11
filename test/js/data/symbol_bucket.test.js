@@ -41,7 +41,7 @@ test('SymbolBucket', function(t) {
             overscaling: 1,
             zoom: 0,
             collisionBoxArray: collisionBoxArray,
-            layer: layer,
+            parentStyleLayer: layer,
             styleLayers: [layer],
             tileExtent: 4096
         });

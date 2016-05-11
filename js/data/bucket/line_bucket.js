@@ -90,10 +90,10 @@ LineBucket.prototype.addFeature = function(feature) {
     for (var i = 0; i < lines.length; i++) {
         this.addLine(
             lines[i],
-            this.layer.layout['line-join'],
-            this.layer.layout['line-cap'],
-            this.layer.layout['line-miter-limit'],
-            this.layer.layout['line-round-limit']
+            this.parentStyleLayer.layout['line-join'],
+            this.parentStyleLayer.layout['line-cap'],
+            this.parentStyleLayer.layout['line-miter-limit'],
+            this.parentStyleLayer.layout['line-round-limit']
         );
     }
 };

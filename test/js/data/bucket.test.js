@@ -61,7 +61,7 @@ test('Bucket', function(t) {
         };
     }
 
-    var dataDrivenPaint = {
+    var propertyFunctionPaint = {
         'circle-color': {
             stops: [[0, 'red'], [100, 'violet']],
             property: 'mapbox'
@@ -73,12 +73,13 @@ test('Bucket', function(t) {
     function create(options) {
         options = options || {};
 
-        var serializedLayers = (options.layers || [{
+        var serializedStyleLayers = (options.styleLayers || [{
             id: 'layerid',
             type: 'circle',
-            paint: dataDrivenPaint
+            paint: propertyFunctionPaint
         }]);
-        var layers = serializedLayers.map(function(serializedLayer) {
+
+        var styleLayers = serializedStyleLayers.map(function(serializedLayer) {
             var styleLayer = new StyleLayer(serializedLayer);
             styleLayer.updatePaintTransitions([], {}, {});
             return styleLayer;
@@ -87,8 +88,8 @@ test('Bucket', function(t) {
 
         var Class = createClass(options);
         return new Class({
-            layer: layers[0],
-            styleLayers: layers,
+            parentStyleLayer: styleLayers[0],
+            styleLayers: styleLayers,
             buffers: {}
         });
     }
@@ -126,9 +127,9 @@ test('Bucket', function(t) {
     });
 
     t.test('add features, multiple layers', function(t) {
-        var bucket = create({layers: [
-            { id: 'one', type: 'circle', paint: dataDrivenPaint },
-            { id: 'two', type: 'circle', paint: dataDrivenPaint }
+        var bucket = create({styleLayers: [
+            { id: 'one', type: 'circle', paint: propertyFunctionPaint },
+            { id: 'two', type: 'circle', paint: propertyFunctionPaint }
         ]});
 
         bucket.features = [createFeature(17, 42)];
@@ -154,7 +155,7 @@ test('Bucket', function(t) {
                 paintProperty: 'circle-color'
             }],
             layoutAttributes: [],
-            layers: [
+            styleLayers: [
                 { id: 'one', type: 'circle', paint: constantPaint }
             ]
         });
@@ -239,7 +240,7 @@ test('Bucket', function(t) {
 
     t.test('layout properties', function(t) {
         var bucket = create();
-        t.equal(bucket.layer.layout.visibility, 'visible');
+        t.equal(bucket.parentStyleLayer.layout.visibility, 'visible');
         t.end();
     });
 
