@@ -14,7 +14,7 @@ function FillBucket() {
 
 FillBucket.prototype = util.inherit(Bucket, {});
 
-FillBucket.prototype.programInterfaces = {
+FillBucket.prototype.dataLayerTypes = {
     fill: {
         vertexBuffer: true,
         elementBuffer: true,

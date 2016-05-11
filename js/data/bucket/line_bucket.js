@@ -68,7 +68,7 @@ LineBucket.prototype.addLineVertex = function(vertexBuffer, point, extrude, tx, 
             (linesofar * LINE_DISTANCE_SCALE) >> 6);
 };
 
-LineBucket.prototype.programInterfaces = {
+LineBucket.prototype.dataLayerTypes = {
     line: {
         vertexBuffer: true,
         elementBuffer: true,

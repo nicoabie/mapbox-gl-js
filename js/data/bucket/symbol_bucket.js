@@ -98,7 +98,7 @@ SymbolBucket.prototype.addCollisionBoxVertex = function(vertexArray, point, extr
             placementZoom * 10);
 };
 
-SymbolBucket.prototype.programInterfaces = {
+SymbolBucket.prototype.dataLayerTypes = {
 
     glyph: {
         vertexBuffer: true,
@@ -435,9 +435,9 @@ SymbolBucket.prototype.placeFeatures = function(collisionTile, showCollisionBoxe
     if (showCollisionBoxes) this.addToDebugBuffers(collisionTile);
 };
 
-SymbolBucket.prototype.addSymbols = function(programName, quads, scale, keepUpright, alongLine, placementAngle) {
+SymbolBucket.prototype.addSymbols = function(dataLayerType, quads, scale, keepUpright, alongLine, placementAngle) {
 
-    var group = this.makeRoomFor(programName, 4 * quads.length);
+    var group = this.makeRoomFor(dataLayerType, 4 * quads.length);
 
     var elementArray = group.layout.element;
     var vertexArray = group.layout.vertex;

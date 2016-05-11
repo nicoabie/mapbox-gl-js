@@ -26,7 +26,7 @@ CircleBucket.prototype.addCircleVertex = function(vertexArray, x, y, extrudeX, e
             (y * 2) + ((extrudeY + 1) / 2));
 };
 
-CircleBucket.prototype.programInterfaces = {
+CircleBucket.prototype.dataLayerTypes = {
     circle: {
         vertexBuffer: true,
         elementBuffer: true,

@@ -14,7 +14,7 @@ test('Bucket', function(t) {
 
         Class.prototype = util.inherit(Bucket, {});
 
-        Class.prototype.programInterfaces = {
+        Class.prototype.dataLayerTypes = {
             test: {
                 vertexBuffer: 'testVertex',
                 elementBuffer: 'testElement',

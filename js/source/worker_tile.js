@@ -251,12 +251,12 @@ WorkerTile.prototype.redoPlacement = function(angle, pitch, showCollisionBoxes) 
 };
 
 function isBucketEmpty(bucket) {
-    for (var programName in bucket.arrayGroups) {
-        var programArrayGroups = bucket.arrayGroups[programName];
-        for (var k = 0; k < programArrayGroups.length; k++) {
-            var programArrayGroup = programArrayGroups[k];
-            for (var layoutOrPaint in programArrayGroup) {
-                var arrays = programArrayGroup[layoutOrPaint];
+    for (var dataLayerTypeName in bucket.arrayGroups) {
+        var dataLayerTypeGroups = bucket.arrayGroups[dataLayerTypeName];
+        for (var k = 0; k < dataLayerTypeGroups.length; k++) {
+            var stylePropertyTypeGroups = dataLayerTypeGroups[k];
+            for (var layoutOrPaint in stylePropertyTypeGroups) {
+                var arrays = stylePropertyTypeGroups[layoutOrPaint];
                 for (var bufferName in arrays) {
                     if (arrays[bufferName].length > 0) return true;
                 }
@@ -274,12 +274,12 @@ function getTransferables(buckets) {
     var transferables = [];
     for (var i in buckets) {
         var bucket = buckets[i];
-        for (var programName in bucket.arrayGroups) {
-            var programArrayGroups = bucket.arrayGroups[programName];
-            for (var k = 0; k < programArrayGroups.length; k++) {
-                var programArrayGroup = programArrayGroups[k];
-                for (var layoutOrPaint in programArrayGroup) {
-                    var arrays = programArrayGroup[layoutOrPaint];
+        for (var dataLayerTypeName in bucket.arrayGroups) {
+            var dataLayerTypeGroups = bucket.arrayGroups[dataLayerTypeName];
+            for (var k = 0; k < dataLayerTypeGroups.length; k++) {
+                var stylePropertyTypeGroups = dataLayerTypeGroups[k];
+                for (var layoutOrPaint in stylePropertyTypeGroups) {
+                    var arrays = stylePropertyTypeGroups[layoutOrPaint];
                     for (var bufferName in arrays) {
                         transferables.push(arrays[bufferName].arrayBuffer);
                     }
