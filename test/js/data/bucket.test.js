@@ -164,7 +164,7 @@ test('Bucket', function(t) {
 
         t.equal(bucket.arrayGroups.test[0].layout.vertex.bytesPerElement, 0);
         t.deepEqual(
-            bucket.paintAttributes.test.one.uniforms[0].getValue.call(bucket),
+            bucket.dataLayers.test.one.uniforms[0].getValue.call(bucket),
             [5]
         );
 

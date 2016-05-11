@@ -5,6 +5,7 @@ var Buffer = require('./buffer');
 var util = require('../util/util');
 var StructArrayType = require('../util/struct_array');
 var VertexArrayObject = require('../render/vertex_array_object');
+var assert = require('assert');
 
 module.exports = Bucket;
 
@@ -73,7 +74,7 @@ function Bucket(options) {
     this.minZoom = this.layer.minzoom;
     this.maxZoom = this.layer.maxzoom;
 
-    this.paintAttributes = createPaintAttributes(this);
+    this.dataLayers = createDataLayers(this);
 
     if (options.arrays) {
         var childLayers = this.childLayers;
@@ -181,10 +182,10 @@ Bucket.prototype.createArrays = function() {
 
             programArrayTypes.layout.vertex = VertexArrayType;
 
-            var layerPaintAttributes = this.paintAttributes[programName];
-            for (var layerName in layerPaintAttributes) {
+            var interfaceLayers = this.dataLayers[programName];
+            for (var layerName in interfaceLayers) {
                 var PaintVertexArrayType = new StructArrayType({
-                    members: layerPaintAttributes[layerName].attributes,
+                    members: interfaceLayers[layerName].attributes,
                     alignment: Buffer.VERTEX_ATTRIBUTE_ALIGNMENT
                 });
 
@@ -239,7 +240,7 @@ Bucket.prototype.trimArrays = function() {
 };
 
 Bucket.prototype.setUniforms = function(gl, programName, program, layer, globalProperties) {
-    var uniforms = this.paintAttributes[programName][layer.id].uniforms;
+    var uniforms = this.dataLayers[programName][layer.id].uniforms;
     for (var i = 0; i < uniforms.length; i++) {
         var uniform = uniforms[i];
         var uniformLocation = program[uniform.name];
@@ -297,7 +298,7 @@ Bucket.prototype.populatePaintArrays = function(interfaceName, globalProperties,
             var vertexArray = group.paint[layer.id];
             vertexArray.resize(length);
 
-            var attributes = this.paintAttributes[interfaceName][layer.id].attributes;
+            var attributes = this.dataLayers[interfaceName][layer.id].attributes;
             for (var m = 0; m < attributes.length; m++) {
                 var attribute = attributes[m];
 
@@ -327,15 +328,15 @@ function createElementBufferType(components) {
     });
 }
 
-function createPaintAttributes(bucket) {
-    var attributes = {};
+function createDataLayers(bucket) {
+    var layers = {};
+
     for (var interfaceName in bucket.programInterfaces) {
-        var layerPaintAttributes = attributes[interfaceName] = {};
+        var interfaceLayers = layers[interfaceName] = {};
+        var interface_ = bucket.programInterfaces[interfaceName];
 
         for (var c = 0; c < bucket.childLayers.length; c++) {
-            var childLayer = bucket.childLayers[c];
-
-            layerPaintAttributes[childLayer.id] = {
+            interfaceLayers[bucket.childLayers[c].id] = {
                 attributes: [],
                 uniforms: [],
                 defines: [],
@@ -344,15 +345,14 @@ function createPaintAttributes(bucket) {
             };
         }
 
-        var interface_ = bucket.programInterfaces[interfaceName];
         if (!interface_.paintAttributes) continue;
         for (var i = 0; i < interface_.paintAttributes.length; i++) {
             var attribute = interface_.paintAttributes[i];
             attribute.multiplier = attribute.multiplier || 1;
 
             for (var j = 0; j < bucket.childLayers.length; j++) {
-                var layer = bucket.childLayers[j];
-                var paintAttributes = layerPaintAttributes[layer.id];
+                var styleLayer = bucket.childLayers[j];
+                var layer = interfaceLayers[styleLayer.id];
 
                 var attributeType = attribute.components === 1 ? 'float' : 'vec' + attribute.components;
                 var attributeInputName = attribute.name;
@@ -362,19 +362,19 @@ function createPaintAttributes(bucket) {
                 var initializePragma = 'initialize(' + attributeInnerName + ')';
                 var attributeVaryingDefinition;
 
-                paintAttributes.fragmentPragmas[initializePragma] = '';
+                layer.fragmentPragmas[initializePragma] = '';
 
-                if (layer.isPaintValueFeatureConstant(attribute.paintProperty)) {
-                    paintAttributes.uniforms.push(attribute);
+                if (styleLayer.isPaintValueFeatureConstant(attribute.paintProperty)) {
+                    layer.uniforms.push(attribute);
 
-                    paintAttributes.fragmentPragmas[definePragma] = paintAttributes.vertexPragmas[definePragma] = [
+                    layer.fragmentPragmas[definePragma] = layer.vertexPragmas[definePragma] = [
                         'uniform',
                         attribute.precision,
                         attributeType,
                         attributeInputName
                     ].join(' ') + ';';
 
-                    paintAttributes.fragmentPragmas[initializePragma] = paintAttributes.vertexPragmas[initializePragma] = [
+                    layer.fragmentPragmas[initializePragma] = layer.vertexPragmas[initializePragma] = [
                         attribute.precision,
                         attributeType,
                         attributeInnerName,
@@ -382,8 +382,8 @@ function createPaintAttributes(bucket) {
                         attributeInputName
                     ].join(' ') + ';\n';
 
-                } else if (layer.isPaintValueZoomConstant(attribute.paintProperty)) {
-                    paintAttributes.attributes.push(util.extend({}, attribute, {
+                } else if (styleLayer.isPaintValueZoomConstant(attribute.paintProperty)) {
+                    layer.attributes.push(util.extend({}, attribute, {
                         name: attributeInputName
                     }));
 
@@ -395,18 +395,18 @@ function createPaintAttributes(bucket) {
                     ].join(' ') + ';\n';
 
                     var attributeAttributeDefinition = [
-                        paintAttributes.fragmentPragmas[definePragma],
+                        layer.fragmentPragmas[definePragma],
                         'attribute',
                         attribute.precision,
                         attributeType,
                         attributeInputName
                     ].join(' ') + ';\n';
 
-                    paintAttributes.fragmentPragmas[definePragma] = attributeVaryingDefinition;
+                    layer.fragmentPragmas[definePragma] = attributeVaryingDefinition;
 
-                    paintAttributes.vertexPragmas[definePragma] = attributeVaryingDefinition + attributeAttributeDefinition;
+                    layer.vertexPragmas[definePragma] = attributeVaryingDefinition + attributeAttributeDefinition;
 
-                    paintAttributes.vertexPragmas[initializePragma] = [
+                    layer.vertexPragmas[initializePragma] = [
                         attributeInnerName,
                         '=',
                         attributeInputName,
@@ -417,7 +417,7 @@ function createPaintAttributes(bucket) {
                 } else {
 
                     var tName = 'u_' + attributeInputName.slice(2) + '_t';
-                    var zoomLevels = layer.getPaintValueStopZoomLevels(attribute.paintProperty);
+                    var zoomLevels = styleLayer.getPaintValueStopZoomLevels(attribute.paintProperty);
 
                     // Pick the index of the first offset to add to the buffers.
                     // Find the four closest stops, ideally with two on each side of the zoom level.
@@ -437,37 +437,37 @@ function createPaintAttributes(bucket) {
                         attributeInnerName
                     ].join(' ') + ';\n';
 
-                    paintAttributes.vertexPragmas[definePragma] = attributeVaryingDefinition + [
+                    layer.vertexPragmas[definePragma] = attributeVaryingDefinition + [
                         'uniform',
                         'lowp',
                         'float',
                         tName
                     ].join(' ') + ';\n';
-                    paintAttributes.fragmentPragmas[definePragma] = attributeVaryingDefinition;
+                    layer.fragmentPragmas[definePragma] = attributeVaryingDefinition;
 
-                    paintAttributes.uniforms.push(util.extend({}, attribute, {
+                    layer.uniforms.push(util.extend({}, attribute, {
                         name: tName,
-                        getValue: createGetUniform(attribute, stopOffset),
+                        getValue: createUniformGetValue(attribute, stopOffset),
                         components: 1
                     }));
 
                     var components = attribute.components;
                     if (components === 1) {
 
-                        paintAttributes.attributes.push(util.extend({}, attribute, {
+                        layer.attributes.push(util.extend({}, attribute, {
                             getValue: createFunctionGetValue(attribute, fourZoomLevels),
                             isFunction: true,
                             components: components * 4
                         }));
 
-                        paintAttributes.vertexPragmas[definePragma] += [
+                        layer.vertexPragmas[definePragma] += [
                             'attribute',
                             attribute.precision,
                             'vec4',
                             attributeInputName
                         ].join(' ') + ';\n';
 
-                        paintAttributes.vertexPragmas[initializePragma] = [
+                        layer.vertexPragmas[initializePragma] = [
                             attributeInnerName,
                             '=',
                             'evaluate_zoom_function_1(' + attributeInputName + ', ' + tName + ')',
@@ -480,19 +480,19 @@ function createPaintAttributes(bucket) {
                         var attributeInputNames = [];
                         for (var k = 0; k < 4; k++) {
                             attributeInputNames.push(attributeInputName + k);
-                            paintAttributes.attributes.push(util.extend({}, attribute, {
+                            layer.attributes.push(util.extend({}, attribute, {
                                 getValue: createFunctionGetValue(attribute, [fourZoomLevels[k]]),
                                 isFunction: true,
                                 name: attributeInputName + k
                             }));
-                            paintAttributes.vertexPragmas[definePragma] += [
+                            layer.vertexPragmas[definePragma] += [
                                 'attribute',
                                 attribute.precision,
                                 attributeType,
                                 attributeInputName + k
                             ].join(' ') + ';\n';
                         }
-                        paintAttributes.vertexPragmas[initializePragma] = [
+                        layer.vertexPragmas[initializePragma] = [
                             attributeInnerName,
                             ' = ',
                             'evaluate_zoom_function_4(' + attributeInputNames.join(', ') + ', ' + tName + ')',
@@ -504,7 +504,7 @@ function createPaintAttributes(bucket) {
             }
         }
     }
-    return attributes;
+    return layers;
 }
 
 function createFunctionGetValue(attribute, stopZoomLevels) {
@@ -524,7 +524,7 @@ function createFunctionGetValue(attribute, stopZoomLevels) {
     };
 }
 
-function createGetUniform(attribute, stopOffset) {
+function createUniformGetValue(attribute, stopOffset) {
     return function(layer, globalProperties) {
         // stopInterp indicates which stops need to be interpolated.
         // If stopInterp is 3.5 then interpolate half way between stops 3 and 4.

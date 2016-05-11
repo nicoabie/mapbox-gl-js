@@ -27,9 +27,9 @@ function drawCircles(painter, source, layer, coords) {
 
         var program = painter.useProgram(
             'circle',
-            bucket.paintAttributes.circle[layer.id].defines,
-            bucket.paintAttributes.circle[layer.id].vertexPragmas,
-            bucket.paintAttributes.circle[layer.id].fragmentPragmas
+            bucket.dataLayers.circle[layer.id].defines,
+            bucket.dataLayers.circle[layer.id].vertexPragmas,
+            bucket.dataLayers.circle[layer.id].fragmentPragmas
         );
 
         gl.uniform2f(program.u_extrude_scale,
