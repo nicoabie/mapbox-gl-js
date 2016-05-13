@@ -10,6 +10,7 @@ attribute vec4 a_data2;
 // the extrusion vector.
 uniform mat4 u_matrix;
 
+uniform mediump float u_angle;
 uniform mediump float u_zoom;
 uniform bool u_skewed;
 uniform float u_extra;
@@ -21,6 +22,7 @@ uniform vec2 u_texsize;
 varying vec2 v_tex;
 varying vec2 v_fade_tex;
 varying float v_gamma_scale;
+varying float v_angle_alpha;
 
 void main() {
     vec2 a_tex = a_data1.xy;
@@ -34,14 +36,32 @@ void main() {
 
     mediump float a_labelangle = floor(a_data1[3]/2.0);
     mediump float a_labelline = mod(a_data1[3],2.0);
+    mediump float a_labeldelta = mod(u_angle + a_labelangle,128.0);
+    mediump float a_horizthresh = 8.0;
 
     if (a_labelline == 1.0) {
         vec2 extrude = u_skewed_extrude_scale * (a_offset / 64.0);
         gl_Position = u_matrix * vec4(a_pos + extrude, 0, 1);
         gl_Position.z += z * gl_Position.w;
+        if ((a_labeldelta >= 0.0 && a_labeldelta < a_horizthresh) ||
+            (a_labeldelta >= (64.0 - a_horizthresh) && a_labeldelta < 64.0) ||
+            (a_labeldelta >= 64.0 && a_labeldelta < (64.0 + a_horizthresh)) ||
+            (a_labeldelta >= (128.0 - a_horizthresh) && a_labeldelta < 128.0)) {
+            v_angle_alpha = 0.0;
+        } else {
+            v_angle_alpha = 1.0;
+        }
     } else {
         vec2 extrude = u_extrude_scale * (a_offset / 64.0);
         gl_Position = u_matrix * vec4(a_pos, 0, 1) + vec4(extrude, 0, 0);
+        if ((a_labeldelta >= 0.0 && a_labeldelta < a_horizthresh) ||
+            (a_labeldelta >= (64.0 - a_horizthresh) && a_labeldelta < 64.0) ||
+            (a_labeldelta >= 64.0 && a_labeldelta < (64.0 + a_horizthresh)) ||
+            (a_labeldelta >= (128.0 - a_horizthresh) && a_labeldelta < 128.0)) {
+            v_angle_alpha = 1.0;
+        } else {
+            v_angle_alpha = 0.0;
+        }
     }
 
     // position of y on the screen

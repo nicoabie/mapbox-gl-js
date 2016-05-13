@@ -163,6 +163,9 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
     var zoomAdjust = Math.log(size / adjustedSize) / Math.LN2 || 0;
     gl.uniform1f(program.u_zoom, (painter.transform.zoom - zoomAdjust) * 10); // current zoom level
 
+    // current tile angle
+    gl.uniform1f(program.u_angle, (tile.collisionTile.angle/(Math.PI*2)) * 128);
+
     gl.activeTexture(gl.TEXTURE1);
     painter.frameHistory.bind(gl);
     gl.uniform1i(program.u_fadetexture, 1);
