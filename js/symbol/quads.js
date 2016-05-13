@@ -23,11 +23,12 @@ var minScale = 0.5; // underscale by 1 zoom level
  * @param {number} angle The angle of the label at it's center, not the angle of this quad.
  * @param {number} minScale The minimum scale, relative to the tile's intended scale, that the glyph can be shown at.
  * @param {number} maxScale The maximum scale, relative to the tile's intended scale, that the glyph can be shown at.
+ * @param {boolean} alongLine Whether this quad was generated for display along a line.
  *
  * @class SymbolQuad
  * @private
  */
-function SymbolQuad(anchorPoint, tl, tr, bl, br, tex, angle, minScale, maxScale) {
+function SymbolQuad(anchorPoint, tl, tr, bl, br, tex, angle, minScale, maxScale, alongLine) {
     this.anchorPoint = anchorPoint;
     this.tl = tl;
     this.tr = tr;
@@ -37,6 +38,7 @@ function SymbolQuad(anchorPoint, tl, tr, bl, br, tex, angle, minScale, maxScale)
     this.angle = angle;
     this.minScale = minScale;
     this.maxScale = maxScale;
+    this.alongLine = alongLine;
 }
 
 /**
@@ -119,23 +121,25 @@ function getGlyphQuads(anchor, shaping, boxScale, line, layout, alongLine) {
 
         var centerX = (positionedGlyph.x + glyph.advance / 2) * boxScale;
 
-        var glyphInstances;
+        var glyphInstances = [];
         var labelMinScale = minScale;
         if (alongLine) {
-            glyphInstances = [];
             labelMinScale = getSegmentGlyphs(glyphInstances, anchor, centerX, line, anchor.segment, true);
             if (keepUpright) {
                 labelMinScale = Math.min(labelMinScale, getSegmentGlyphs(glyphInstances, anchor, centerX, line, anchor.segment, false));
             }
+        }
 
-        } else {
-            glyphInstances = [{
+        // Check for either viewport placement or hybrid placement
+        if (true) {
+            glyphInstances.push({
                 anchorPoint: new Point(anchor.x, anchor.y),
                 offset: 0,
                 angle: 0,
                 maxScale: Infinity,
-                minScale: minScale
-            }];
+                minScale: minScale,
+                alongLine: false
+            });
         }
 
         var x1 = positionedGlyph.x + glyph.left,
@@ -172,7 +176,7 @@ function getGlyphQuads(anchor, shaping, boxScale, line, layout, alongLine) {
             var glyphMinScale = Math.max(instance.minScale, labelMinScale);
 
             var glyphAngle = (anchor.angle + textRotate + instance.offset + 2 * Math.PI) % (2 * Math.PI);
-            quads.push(new SymbolQuad(instance.anchorPoint, tl, tr, bl, br, rect, glyphAngle, glyphMinScale, instance.maxScale));
+            quads.push(new SymbolQuad(instance.anchorPoint, tl, tr, bl, br, rect, glyphAngle, glyphMinScale, instance.maxScale, instance.alongLine));
 
         }
     }
@@ -225,7 +229,8 @@ function getSegmentGlyphs(glyphs, anchor, offset, line, segment, forward) {
             offset: upsideDown ? Math.PI : 0,
             minScale: scale,
             maxScale: prevScale,
-            angle: (angle + 2 * Math.PI) % (2 * Math.PI)
+            angle: (angle + 2 * Math.PI) % (2 * Math.PI),
+            alongLine: true
         });
 
         if (scale <= placementScale) break;

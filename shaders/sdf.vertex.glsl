@@ -14,6 +14,7 @@ uniform mediump float u_zoom;
 uniform bool u_skewed;
 uniform float u_extra;
 uniform vec2 u_extrude_scale;
+uniform vec2 u_skewed_extrude_scale;
 
 uniform vec2 u_texsize;
 
@@ -31,11 +32,15 @@ void main() {
     // u_zoom is the current zoom level adjusted for the change in font size
     mediump float z = 2.0 - step(a_minzoom, u_zoom) - (1.0 - step(a_maxzoom, u_zoom));
 
-    vec2 extrude = u_extrude_scale * (a_offset / 64.0);
-    if (u_skewed) {
+    mediump float a_labelangle = floor(a_data1[3]/2.0);
+    mediump float a_labelline = mod(a_data1[3],2.0);
+
+    if (a_labelline == 1.0) {
+        vec2 extrude = u_skewed_extrude_scale * (a_offset / 64.0);
         gl_Position = u_matrix * vec4(a_pos + extrude, 0, 1);
         gl_Position.z += z * gl_Position.w;
     } else {
+        vec2 extrude = u_extrude_scale * (a_offset / 64.0);
         gl_Position = u_matrix * vec4(a_pos, 0, 1) + vec4(extrude, 0, 0);
     }
 

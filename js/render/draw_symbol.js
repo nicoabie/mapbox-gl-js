@@ -113,16 +113,16 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
     var defaultSize = isText ? 24 : 1;
     var fontScale = size / defaultSize;
 
-    var extrudeScale, s, gammaScale;
-    if (alignedWithMap) {
-        s = pixelsToTileUnits(tile, 1, painter.transform.zoom) * fontScale;
-        gammaScale = 1 / Math.cos(tr._pitch);
-        extrudeScale = [s, s];
-    } else {
-        s = painter.transform.altitude * fontScale;
-        gammaScale = 1;
-        extrudeScale = [ tr.pixelsToGLUnits[0] * s, tr.pixelsToGLUnits[1] * s];
-    }
+    //alignedWithMap = true;
+
+    var skewedScale = pixelsToTileUnits(tile, 1, painter.transform.zoom) * fontScale;
+    var skewedExtrudeScale = [skewedScale, skewedScale];
+
+    var viewScale = painter.transform.altitude * fontScale;
+    var viewExtrudeScale = [ tr.pixelsToGLUnits[0] * viewScale, tr.pixelsToGLUnits[1] * viewScale];
+    // @TODO
+    // var skewedGammaScale = 1 / Math.cos(tr._pitch);
+    var gammaScale = 1;
 
     // calculate how much longer the real world distance is at the top of the screen
     // than at the middle of the screen.
@@ -135,9 +135,10 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
 
     var program = painter.useProgram(sdf ? 'sdf' : 'icon');
     gl.uniformMatrix4fv(program.u_matrix, false, painter.translatePosMatrix(posMatrix, tile, translate, translateAnchor));
-    gl.uniform1i(program.u_skewed, alignedWithMap);
+    gl.uniform1i(program.u_skewed, false&&alignedWithMap);
     gl.uniform1f(program.u_extra, extra);
-    gl.uniform2fv(program.u_extrude_scale, extrudeScale);
+    gl.uniform2fv(program.u_extrude_scale, viewExtrudeScale);
+    gl.uniform2fv(program.u_skewed_extrude_scale, skewedExtrudeScale);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(program.u_texture, 0);

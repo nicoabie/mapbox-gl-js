@@ -67,7 +67,7 @@ var programAttributes = [{
     type: 'Uint8'
 }];
 
-function addVertex(array, x, y, ox, oy, tx, ty, minzoom, maxzoom, labelminzoom) {
+function addVertex(array, x, y, ox, oy, tx, ty, minzoom, maxzoom, labelminzoom, labelangle) {
     return array.emplaceBack(
             // pos
             x,
@@ -79,7 +79,7 @@ function addVertex(array, x, y, ox, oy, tx, ty, minzoom, maxzoom, labelminzoom) 
             tx / 4,                   // tex
             ty / 4,                   // tex
             (labelminzoom || 0) * 10, // labelminzoom
-            0,
+            labelangle, // labelangle
             // data2
             (minzoom || 0) * 10,               // minzoom
             Math.min(maxzoom || 25, 25) * 10); // minzoom
@@ -452,7 +452,25 @@ SymbolBucket.prototype.addSymbols = function(programName, quads, scale, keepUpri
 
         // drop upside down versions of glyphs
         var a = (angle + placementAngle + Math.PI) % (Math.PI * 2);
-        if (keepUpright && alongLine && (a <= Math.PI / 2 || a > Math.PI * 3 / 2)) continue;
+        if (keepUpright && alongLine && symbol.alongLine && (a <= Math.PI / 2 || a > Math.PI * 3 / 2)) continue;
+
+//        // Calculate angle of line to camera and skip if it exceeds 45 degree range
+//        var angleFrom = alongLine ? 0 : 60;
+//        var angleTo = alongLine ? 60 : 90;
+//        var cameraToLineAngle = (placementAngle + angle + (Math.PI*0.5)) % (Math.PI*2);
+//        while (cameraToLineAngle < 0) cameraToLineAngle += Math.PI*2;
+//        cameraToLineAngle = cameraToLineAngle/(Math.PI*2)*360;
+//        var anglePass = (
+//            // NE
+//            (cameraToLineAngle >= angleFrom && cameraToLineAngle < angleTo) ||
+//            // SW
+//            (cameraToLineAngle >= (angleFrom+180) && cameraToLineAngle < (angleTo+180)) ||
+//            // NW
+//            (cameraToLineAngle >= (360-angleTo) && cameraToLineAngle < (360-angleFrom)) ||
+//            // SE
+//            (cameraToLineAngle >= (180-angleTo) && cameraToLineAngle < (180-angleFrom))
+//        );
+//        if (!anglePass) continue;
 
         var tl = symbol.tl,
             tr = symbol.tr,
@@ -469,10 +487,13 @@ SymbolBucket.prototype.addSymbols = function(programName, quads, scale, keepUpri
         // Lower min zoom so that while fading out the label it can be shown outside of collision-free zoom levels
         if (minZoom === placementZoom) minZoom = 0;
 
-        var index = addVertex(vertexArray, anchorPoint.x, anchorPoint.y, tl.x, tl.y, tex.x, tex.y, minZoom, maxZoom, placementZoom);
-        addVertex(vertexArray, anchorPoint.x, anchorPoint.y, tr.x, tr.y, tex.x + tex.w, tex.y, minZoom, maxZoom, placementZoom);
-        addVertex(vertexArray, anchorPoint.x, anchorPoint.y, bl.x, bl.y, tex.x, tex.y + tex.h, minZoom, maxZoom, placementZoom);
-        addVertex(vertexArray, anchorPoint.x, anchorPoint.y, br.x, br.y, tex.x + tex.w, tex.y + tex.h, minZoom, maxZoom, placementZoom);
+        // Encode angle of line together with symbol.alongLine
+        var placementAngleLine = (Math.floor((angle/(Math.PI*2))*128)*2) + (symbol.alongLine ? 1 : 0);
+
+        var index = addVertex(vertexArray, anchorPoint.x, anchorPoint.y, tl.x, tl.y, tex.x, tex.y, minZoom, maxZoom, placementZoom, placementAngleLine);
+        addVertex(vertexArray, anchorPoint.x, anchorPoint.y, tr.x, tr.y, tex.x + tex.w, tex.y, minZoom, maxZoom, placementZoom, placementAngleLine);
+        addVertex(vertexArray, anchorPoint.x, anchorPoint.y, bl.x, bl.y, tex.x, tex.y + tex.h, minZoom, maxZoom, placementZoom, placementAngleLine);
+        addVertex(vertexArray, anchorPoint.x, anchorPoint.y, br.x, br.y, tex.x + tex.w, tex.y + tex.h, minZoom, maxZoom, placementZoom, placementAngleLine);
 
         elementArray.emplaceBack(index, index + 1, index + 2);
         elementArray.emplaceBack(index + 1, index + 2, index + 3);
