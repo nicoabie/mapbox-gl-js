@@ -451,26 +451,13 @@ SymbolBucket.prototype.addSymbols = function(programName, quads, scale, keepUpri
             angle = symbol.angle;
 
         // drop upside down versions of glyphs
-        var a = (angle + placementAngle + Math.PI) % (Math.PI * 2);
-        if (keepUpright && alongLine && symbol.alongLine && (a <= Math.PI / 2 || a > Math.PI * 3 / 2)) continue;
+        var a = (angle + placementAngle + Math.PI) % (Math.PI * 2)
 
-//        // Calculate angle of line to camera and skip if it exceeds 45 degree range
-//        var angleFrom = alongLine ? 0 : 60;
-//        var angleTo = alongLine ? 60 : 90;
-//        var cameraToLineAngle = (placementAngle + angle + (Math.PI*0.5)) % (Math.PI*2);
-//        while (cameraToLineAngle < 0) cameraToLineAngle += Math.PI*2;
-//        cameraToLineAngle = cameraToLineAngle/(Math.PI*2)*360;
-//        var anglePass = (
-//            // NE
-//            (cameraToLineAngle >= angleFrom && cameraToLineAngle < angleTo) ||
-//            // SW
-//            (cameraToLineAngle >= (angleFrom+180) && cameraToLineAngle < (angleTo+180)) ||
-//            // NW
-//            (cameraToLineAngle >= (360-angleTo) && cameraToLineAngle < (360-angleFrom)) ||
-//            // SE
-//            (cameraToLineAngle >= (180-angleTo) && cameraToLineAngle < (180-angleFrom))
-//        );
-//        if (!anglePass) continue;
+        // add a slight offset to the right-side up threshold to prevent
+        // label-flip jitter when travelling parellel to labeled lines (common)
+        a += (Math.PI * 0.01);
+
+        if (keepUpright && alongLine && symbol.alongLine && (a <= Math.PI / 2 || a > Math.PI * 3 / 2)) continue;
 
         var tl = symbol.tl,
             tr = symbol.tr,
