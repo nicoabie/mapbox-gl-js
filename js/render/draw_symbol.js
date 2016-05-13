@@ -135,7 +135,7 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
 
     var program = painter.useProgram(sdf ? 'sdf' : 'icon');
     gl.uniformMatrix4fv(program.u_matrix, false, painter.translatePosMatrix(posMatrix, tile, translate, translateAnchor));
-    gl.uniform1i(program.u_skewed, false&&alignedWithMap);
+    gl.uniform1i(program.u_skewed, alignedWithMap);
     gl.uniform1f(program.u_extra, extra);
     gl.uniform2fv(program.u_extrude_scale, viewExtrudeScale);
     gl.uniform2fv(program.u_skewed_extrude_scale, skewedExtrudeScale);
