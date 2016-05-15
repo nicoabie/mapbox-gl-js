@@ -112,6 +112,12 @@ SymbolBucket.prototype.programInterfaces = {
         layoutAttributes: programAttributes
     },
 
+    box: {
+        vertexBuffer: true,
+        elementBuffer: true,
+        layoutAttributes: programAttributes
+    },
+
     collisionBox: {
         vertexBuffer: true,
 
@@ -420,6 +426,7 @@ SymbolBucket.prototype.placeFeatures = function(collisionTile, showCollisionBoxe
             collisionTile.insertCollisionFeature(symbolInstance.textCollisionFeature, glyphScale, layout['text-ignore-placement']);
             if (glyphScale <= maxScale) {
                 this.addSymbols('glyph', symbolInstance.glyphQuads, glyphScale, layout['text-keep-upright'], textAlongLine, collisionTile.angle);
+                this.addSymbolBox(symbolInstance.glyphQuads, glyphScale, layout['text-keep-upright'], textAlongLine, collisionTile.angle);
             }
         }
 
@@ -433,6 +440,49 @@ SymbolBucket.prototype.placeFeatures = function(collisionTile, showCollisionBoxe
     }
 
     if (showCollisionBoxes) this.addToDebugBuffers(collisionTile);
+};
+
+SymbolBucket.prototype.addSymbolBox = function(quads, scale, alongLine, placementAngle) {
+    var group = this.makeRoomFor('box', 4);
+
+    var elementArray = group.layout.element;
+    var vertexArray = group.layout.vertex;
+
+    var zoom = this.zoom;
+    var placementZoom = Math.max(Math.log(scale) / Math.LN2 + zoom, 0);
+
+    var minx = 8192;
+    var maxx = 0;
+    var miny = 8192;
+    var maxy = 0;
+    var anchorPoint, angle, minZoom, maxZoom, placementAngleLine;
+    for (var i = 0; i < quads.length; i++) {
+        if (quads[i].alongLine) continue;
+        minx = Math.min(minx, quads[i].tl.x, quads[i].tr.x, quads[i].bl.x, quads[i].br.x);
+        maxx = Math.max(maxx, quads[i].tl.x, quads[i].tr.x, quads[i].bl.x, quads[i].br.x);
+        miny = Math.min(miny, quads[i].tl.y, quads[i].tr.y, quads[i].bl.y, quads[i].br.y);
+        maxy = Math.max(maxy, quads[i].tl.y, quads[i].tr.y, quads[i].bl.y, quads[i].br.y);
+        anchorPoint = anchorPoint || quads[i].anchorPoint;
+        angle = angle || quads[i].angle;
+        minZoom = minZoom || Math.max(zoom + Math.log(quads[i].minScale) / Math.LN2, placementZoom);
+        maxZoom = maxZoom || Math.min(zoom + Math.log(quads[i].maxScale) / Math.LN2, 25);
+
+        // Encode angle of line together with symbol.alongLine
+        placementAngleLine = placementAngleLine || (Math.floor((angle/(Math.PI*2))*128)*2) + (quads[i].alongLine ? 1 : 0);
+    }
+
+    if (maxZoom <= minZoom) return;
+
+    // Encode angle of line together with symbol.alongLine
+    if (minZoom === placementZoom) minZoom = 0;
+
+    var index = addVertex(vertexArray, anchorPoint.x, anchorPoint.y, minx, maxy, 0, 0, minZoom, maxZoom, placementZoom, placementAngleLine);
+    addVertex(vertexArray, anchorPoint.x, anchorPoint.y, maxx, maxy, 0, 0, minZoom, maxZoom, placementZoom, placementAngleLine);
+    addVertex(vertexArray, anchorPoint.x, anchorPoint.y, minx, miny, 0, 0, minZoom, maxZoom, placementZoom, placementAngleLine);
+    addVertex(vertexArray, anchorPoint.x, anchorPoint.y, maxx, miny, 0, 0, minZoom, maxZoom, placementZoom, placementAngleLine);
+
+    elementArray.emplaceBack(index, index + 1, index + 2);
+    elementArray.emplaceBack(index + 1, index + 2, index + 3);
 };
 
 SymbolBucket.prototype.addSymbols = function(programName, quads, scale, keepUpright, alongLine, placementAngle) {

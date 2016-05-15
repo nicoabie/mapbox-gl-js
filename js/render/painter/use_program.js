@@ -58,6 +58,10 @@ var definitions = {
     collisionbox: {
         fragmentSource: fs.readFileSync(path.join(__dirname, '../../../shaders/collisionbox.fragment.glsl'), 'utf8'),
         vertexSource: fs.readFileSync(path.join(__dirname, '../../../shaders/collisionbox.vertex.glsl'), 'utf8')
+    },
+    box: {
+        fragmentSource: fs.readFileSync(path.join(__dirname, '../../../shaders/box.fragment.glsl'), 'utf8'),
+        vertexSource: fs.readFileSync(path.join(__dirname, '../../../shaders/sdf.vertex.glsl'), 'utf8')
     }
 };
 

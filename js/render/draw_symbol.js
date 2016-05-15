@@ -31,7 +31,7 @@ function drawSymbols(painter, source, layer, coords) {
     painter.depthMask(false);
     gl.disable(gl.DEPTH_TEST);
 
-    drawLayerSymbols(painter, source, layer, coords, false,
+    drawLayerSymbols(painter, source, layer, coords, 'icon',
             layer.paint['icon-translate'],
             layer.paint['icon-translate-anchor'],
             layer.layout['icon-rotation-alignment'],
@@ -42,7 +42,18 @@ function drawSymbols(painter, source, layer, coords) {
             layer.paint['icon-opacity'],
             layer.paint['icon-color']);
 
-    drawLayerSymbols(painter, source, layer, coords, true,
+    drawLayerSymbols(painter, source, layer, coords, 'box',
+            layer.paint['text-translate'],
+            layer.paint['text-translate-anchor'],
+            layer.layout['text-rotation-alignment'],
+            layer.layout['text-size'],
+            layer.paint['text-halo-width'],
+            layer.paint['text-halo-color'],
+            layer.paint['text-halo-blur'],
+            layer.paint['text-opacity'],
+            layer.paint['text-color']);
+
+    drawLayerSymbols(painter, source, layer, coords, 'glyph',
             layer.paint['text-translate'],
             layer.paint['text-translate-anchor'],
             layer.layout['text-rotation-alignment'],
@@ -58,7 +69,7 @@ function drawSymbols(painter, source, layer, coords) {
     drawCollisionDebug(painter, source, layer, coords);
 }
 
-function drawLayerSymbols(painter, source, layer, coords, isText,
+function drawLayerSymbols(painter, source, layer, coords, group,
         translate,
         translateAnchor,
         rotationAlignment,
@@ -77,12 +88,19 @@ function drawLayerSymbols(painter, source, layer, coords, isText,
         var bucket = tile.getBucket(layer);
         if (!bucket) continue;
         var bothBufferGroups = bucket.bufferGroups;
-        var bufferGroups = isText ? bothBufferGroups.glyph : bothBufferGroups.icon;
+        var bufferGroups = bothBufferGroups[group];
         if (!bufferGroups.length) continue;
+
+        // For glyph and box bufferGroups use text sizing
+        var isText = (group === 'glyph' || group === 'box');
+
+        // One of: sdf, icon, box
+        var programName = (group === 'glyph' || bucket.sdfIcons) ? 'sdf' : group;
 
         painter.enableTileClippingMask(coords[j]);
         drawSymbol(painter, layer, coords[j].posMatrix, tile, bucket, bufferGroups, isText,
-                isText || bucket.sdfIcons, !isText && bucket.iconsNeedLinear,
+                programName,
+                !isText && bucket.iconsNeedLinear,
                 isText ? bucket.adjustedTextSize : bucket.adjustedIconSize, bucket.fontstack,
                 translate,
                 translateAnchor,
@@ -96,7 +114,7 @@ function drawLayerSymbols(painter, source, layer, coords, isText,
     }
 }
 
-function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isText, sdf, iconsNeedLinear, adjustedSize, fontstack,
+function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isText, programName, iconsNeedLinear, adjustedSize, fontstack,
         translate,
         translateAnchor,
         rotationAlignment,
@@ -130,10 +148,10 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
     var x = tr.height / 2 * Math.tan(tr._pitch);
     var extra = (topedgelength + x) / topedgelength - 1;
 
-    if (!isText && !painter.style.sprite.loaded())
+    if (programName === 'icon' && !painter.style.sprite.loaded())
         return;
 
-    var program = painter.useProgram(sdf ? 'sdf' : 'icon');
+    var program = painter.useProgram(programName);
     gl.uniformMatrix4fv(program.u_matrix, false, painter.translatePosMatrix(posMatrix, tile, translate, translateAnchor));
     gl.uniform1i(program.u_skewed, alignedWithMap);
     gl.uniform1f(program.u_extra, extra);
@@ -143,7 +161,7 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(program.u_texture, 0);
 
-    if (isText) {
+    if (programName === 'sdf') {
         // use the fonstack used when parsing the tile, not the fontstack
         // at the current zoom level (layout['text-font']).
         var glyphAtlas = fontstack && painter.glyphSource.getGlyphAtlas(fontstack);
@@ -155,7 +173,7 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
         var mapMoving = painter.options.rotating || painter.options.zooming;
         var iconScaled = fontScale !== 1 || browser.devicePixelRatio !== painter.spriteAtlas.pixelRatio || iconsNeedLinear;
         var iconTransformed = alignedWithMap || painter.transform.pitch;
-        painter.spriteAtlas.bind(gl, sdf || mapMoving || iconScaled || iconTransformed);
+        painter.spriteAtlas.bind(gl, programName === 'sdf' || mapMoving || iconScaled || iconTransformed);
         gl.uniform2f(program.u_texsize, painter.spriteAtlas.width / 4, painter.spriteAtlas.height / 4);
     }
 
@@ -172,7 +190,7 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
 
     var group;
 
-    if (sdf) {
+    if (programName === 'sdf') {
         var sdfPx = 8;
         var blurOffset = 1.19;
         var haloOffset = 6;
@@ -203,7 +221,14 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
             gl.drawElements(gl.TRIANGLES, group.layout.element.length * 3, gl.UNSIGNED_SHORT, 0);
         }
 
-    } else {
+    } else if (programName === 'icon') {
+        gl.uniform1f(program.u_opacity, opacity);
+        for (var k = 0; k < bufferGroups.length; k++) {
+            group = bufferGroups[k];
+            group.vaos[layer.id].bind(gl, program, group.layout.vertex, group.layout.element);
+            gl.drawElements(gl.TRIANGLES, group.layout.element.length * 3, gl.UNSIGNED_SHORT, 0);
+        }
+    } else if (programName === 'box') {
         gl.uniform1f(program.u_opacity, opacity);
         for (var k = 0; k < bufferGroups.length; k++) {
             group = bufferGroups[k];
@@ -212,3 +237,4 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
         }
     }
 }
+

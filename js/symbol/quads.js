@@ -130,7 +130,7 @@ function getGlyphQuads(anchor, shaping, boxScale, line, layout, alongLine) {
             }
         }
 
-        // Check for either viewport placement or hybrid placement
+        // @TODO Check for either viewport placement or hybrid placement
         if (true) {
             glyphInstances.push({
                 anchorPoint: new Point(anchor.x, anchor.y),
