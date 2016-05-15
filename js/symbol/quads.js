@@ -198,20 +198,29 @@ function getGlyphQuads(anchor, shaping, boxScale, line, layout, alongLine) {
  * @private
  */
 function getBoxQuads(anchor, shaping, boxScale, line, layout, alongLine) {
+    if (!layout['text-box']) return [];
+
+    var quads = [];
     var textRotate = layout['text-rotate'] * Math.PI / 180;
     var keepUpright = layout['text-keep-upright'];
-
     var positionedGlyphs = shaping.positionedGlyphs;
-    var quads = [];
 
     var firstGlyph = positionedGlyphs[0];
     var lastGlyph = positionedGlyphs[positionedGlyphs.length-1];
     var x1 = firstGlyph.x + firstGlyph.glyph.left,
         y1 = firstGlyph.y - firstGlyph.glyph.top,
         x2 = lastGlyph.x + lastGlyph.glyph.left + lastGlyph.glyph.rect.w,
-        y2 = lastGlyph.y - lastGlyph.glyph.top + lastGlyph.glyph.rect.h,
+        y2 = lastGlyph.y - lastGlyph.glyph.top + lastGlyph.glyph.rect.h;
 
-        otl = new Point(x1, y1),
+    var oneEm = 24;
+    var xpadding = layout['text-box-padding'][0] * oneEm;
+    var ypadding = layout['text-box-padding'][1] * oneEm;
+    x1 -= xpadding;
+    x2 += xpadding;
+    y1 -= ypadding;
+    y2 += ypadding;
+
+    var otl = new Point(x1, y1),
         otr = new Point(x2, y1),
         obl = new Point(x1, y2),
         obr = new Point(x2, y2);

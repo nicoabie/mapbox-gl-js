@@ -31,6 +31,7 @@ function drawSymbols(painter, source, layer, coords) {
     painter.depthMask(false);
     gl.disable(gl.DEPTH_TEST);
 
+
     drawLayerSymbols(painter, source, layer, coords, 'icon',
             layer.paint['icon-translate'],
             layer.paint['icon-translate-anchor'],
@@ -51,7 +52,8 @@ function drawSymbols(painter, source, layer, coords) {
             layer.paint['text-halo-color'],
             layer.paint['text-halo-blur'],
             layer.paint['text-opacity'],
-            layer.paint['text-color']);
+            layer.paint['text-color'],
+            layer.paint['text-box-color']);
 
     drawLayerSymbols(painter, source, layer, coords, 'glyph',
             layer.paint['text-translate'],
@@ -78,7 +80,8 @@ function drawLayerSymbols(painter, source, layer, coords, group,
         haloColor,
         haloBlur,
         opacity,
-        color) {
+        color,
+        boxColor) {
 
     haloColor = util.premultiply(haloColor);
     color = util.premultiply(color);
@@ -110,7 +113,8 @@ function drawLayerSymbols(painter, source, layer, coords, group,
                 haloColor,
                 haloBlur,
                 opacity,
-                color);
+                color,
+                boxColor);
     }
 }
 
@@ -123,7 +127,8 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
         haloColor,
         haloBlur,
         opacity,
-        color) {
+        color,
+        boxColor) {
     var gl = painter.gl;
     var tr = painter.transform;
     var alignedWithMap = rotationAlignment === 'map';
@@ -229,6 +234,7 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
             gl.drawElements(gl.TRIANGLES, group.layout.element.length * 3, gl.UNSIGNED_SHORT, 0);
         }
     } else if (programName === 'box') {
+        gl.uniform4fv(program.u_box_color, boxColor);
         gl.uniform1f(program.u_opacity, opacity);
         for (var k = 0; k < bufferGroups.length; k++) {
             group = bufferGroups[k];
