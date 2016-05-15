@@ -3,6 +3,7 @@
 var Point = require('point-geometry');
 
 module.exports = {
+    getBoxQuads: getBoxQuads,
     getIconQuads: getIconQuads,
     getGlyphQuads: getGlyphQuads
 };
@@ -177,9 +178,67 @@ function getGlyphQuads(anchor, shaping, boxScale, line, layout, alongLine) {
 
             var glyphAngle = (anchor.angle + textRotate + instance.offset + 2 * Math.PI) % (2 * Math.PI);
             quads.push(new SymbolQuad(instance.anchorPoint, tl, tr, bl, br, rect, glyphAngle, glyphMinScale, instance.maxScale, instance.alongLine));
-
         }
     }
+
+    return quads;
+}
+
+/**
+ * Create the quads used for rendering a text box around a label.
+ * Uses the same text shaping to size the text box neatly.
+ *
+ * @param {Anchor} anchor
+ * @param {Shaping} shaping
+ * @param {number} boxScale A magic number for converting from glyph metric units to geometry units.
+ * @param {Array<Array<Point>>} line
+ * @param {LayoutProperties} layout
+ * @param {boolean} alongLine Whether the label should be placed along the line.
+ * @returns {Array<SymbolQuad>}
+ * @private
+ */
+function getBoxQuads(anchor, shaping, boxScale, line, layout, alongLine) {
+    var textRotate = layout['text-rotate'] * Math.PI / 180;
+    var keepUpright = layout['text-keep-upright'];
+
+    var positionedGlyphs = shaping.positionedGlyphs;
+    var quads = [];
+
+    var firstGlyph = positionedGlyphs[0];
+    var lastGlyph = positionedGlyphs[positionedGlyphs.length-1];
+    var x1 = firstGlyph.x + firstGlyph.glyph.left,
+        y1 = firstGlyph.y - firstGlyph.glyph.top,
+        x2 = lastGlyph.x + lastGlyph.glyph.left + lastGlyph.glyph.rect.w,
+        y2 = lastGlyph.y - lastGlyph.glyph.top + lastGlyph.glyph.rect.h,
+
+        otl = new Point(x1, y1),
+        otr = new Point(x2, y1),
+        obl = new Point(x1, y2),
+        obr = new Point(x2, y2);
+
+    var tl = otl,
+        tr = otr,
+        bl = obl,
+        br = obr,
+        angle = 0 + textRotate;
+
+    if (angle) {
+        var sin = Math.sin(angle),
+            cos = Math.cos(angle),
+            matrix = [cos, -sin, sin, cos];
+
+        tl = tl.matMult(matrix);
+        tr = tr.matMult(matrix);
+        bl = bl.matMult(matrix);
+        br = br.matMult(matrix);
+    }
+
+    var glyphMinScale = minScale;
+    var offset = 0;
+    var glyphAngle = (anchor.angle + textRotate + offset + 2 * Math.PI) % (2 * Math.PI);
+    var tex = { x:0, y:0, width:0, height:0, w:0, h:0 };
+    var maxScale = Infinity;
+    quads.push(new SymbolQuad(new Point(anchor.x, anchor.y), tl, tr, bl, br, tex, glyphAngle, glyphMinScale, maxScale, false));
 
     return quads;
 }
