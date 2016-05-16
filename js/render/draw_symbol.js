@@ -136,8 +136,6 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
     var defaultSize = isText ? 24 : 1;
     var fontScale = size / defaultSize;
 
-    //alignedWithMap = true;
-
     var skewedScale = pixelsToTileUnits(tile, 1, painter.transform.zoom) * fontScale;
     var skewedExtrudeScale = [skewedScale, skewedScale];
 
