@@ -207,10 +207,20 @@ function getBoxQuads(anchor, shaping, boxScale, line, layout, alongLine) {
 
     var firstGlyph = positionedGlyphs[0];
     var lastGlyph = positionedGlyphs[positionedGlyphs.length-1];
-    var x1 = firstGlyph.x + firstGlyph.glyph.left,
-        y1 = firstGlyph.y - firstGlyph.glyph.top,
-        x2 = lastGlyph.x + lastGlyph.glyph.left + lastGlyph.glyph.rect.w,
-        y2 = lastGlyph.y - lastGlyph.glyph.top + lastGlyph.glyph.rect.h;
+    var x1 = positionedGlyphs.reduce(function(memo, glyph) {
+            return Math.min(memo, glyph.x + glyph.glyph.left);
+        }, Infinity),
+        y1 = positionedGlyphs.reduce(function(memo, glyph) {
+            return Math.min(memo, glyph.y - glyph.glyph.top);
+        }, Infinity),
+        x2 = positionedGlyphs.reduce(function(memo, glyph) {
+            if (!glyph.glyph.rect) return memo;
+            return Math.max(memo, glyph.x + glyph.glyph.left + glyph.glyph.rect.w);
+        }, -Infinity),
+        y2 = positionedGlyphs.reduce(function(memo, glyph) {
+            if (!glyph.glyph.rect) return memo;
+            return Math.max(memo, glyph.y - glyph.glyph.top + glyph.glyph.rect.h);
+        }, -Infinity);
 
     var oneEm = 24;
     var xpadding = layout['text-box-padding'][0] * oneEm;
